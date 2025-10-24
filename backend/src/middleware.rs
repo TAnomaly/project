@@ -17,7 +17,7 @@ pub async fn auth_middleware(
     if path.starts_with("/health") || 
        path.starts_with("/api/auth") ||
        path.starts_with("/api/creators") ||
-       path.starts_with("/api/campaigns") ||
+       (path.starts_with("/api/campaigns") && request.method() == "GET") ||
        path.starts_with("/api/events") ||
        path.starts_with("/api/posts") ||
        path.starts_with("/api/products") ||
