@@ -55,6 +55,34 @@ const mockCampaign = {
 
 const donationAmounts = [10, 25, 50, 100, 250, 500];
 
+// Helper function to convert YouTube URLs to embed format
+const getEmbedUrl = (url: string): string => {
+  if (!url) return "";
+  
+  // If it's already an embed URL, return as is
+  if (url.includes("embed")) return url;
+  
+  // YouTube watch URL
+  if (url.includes("youtube.com/watch")) {
+    const videoId = url.split("v=")[1]?.split("&")[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+  
+  // YouTube short URL
+  if (url.includes("youtu.be/")) {
+    const videoId = url.split("youtu.be/")[1]?.split("?")[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  }
+  
+  // Vimeo URL
+  if (url.includes("vimeo.com/")) {
+    const videoId = url.split("vimeo.com/")[1]?.split("?")[0];
+    return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
+  }
+  
+  return url;
+};
+
 export default function CampaignDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();
   const resolvedParams = use(params);
@@ -217,16 +245,19 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ slug:
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
                   <img
-                    src={campaignData.creator?.avatar || `https://ui-avatars.com/api/?name=${campaignData.creator?.username}&background=667eea&color=fff`}
-                    alt={campaignData.creator?.username || "Creator"}
-                    className="w-16 h-16 rounded-full"
+                    src={campaignData.creator?.avatar || `https://ui-avatars.com/api/?name=${campaignData.creator?.firstName || campaignData.creator?.username || 'Creator'}&background=667eea&color=fff`}
+                    alt={campaignData.creator?.firstName || campaignData.creator?.username || "Creator"}
+                    className="w-16 h-16 rounded-full object-cover"
                   />
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">
-                      {campaignData.creator?.firstName} {campaignData.creator?.lastName}
+                      {campaignData.creator?.firstName && campaignData.creator?.lastName 
+                        ? `${campaignData.creator.firstName} ${campaignData.creator.lastName}`
+                        : campaignData.creator?.username || "Creator"
+                      }
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      @{campaignData.creator?.username}
+                      @{campaignData.creator?.username || "creator"}
                     </p>
                     {campaignData.creator?.bio && (
                       <p className="text-sm text-muted-foreground mt-1">
@@ -281,7 +312,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ slug:
                       <iframe
                         width="100%"
                         height="450"
-                        src={campaignData.videoUrl}
+                        src={getEmbedUrl(campaignData.videoUrl)}
                         title="Campaign video"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

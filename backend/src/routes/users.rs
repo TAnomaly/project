@@ -135,6 +135,25 @@ async fn become_creator(
 ) -> Result<Json<serde_json::Value>, StatusCode> {
     let user_id = &claims.sub;
     
+    println!("🔄 User {} is trying to become a creator", user_id);
+    
+    // Check if user exists first
+    let user_exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)"
+    )
+    .bind(user_id)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Error checking if user exists: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    
+    if !user_exists {
+        eprintln!("User {} not found", user_id);
+        return Err(StatusCode::NOT_FOUND);
+    }
+    
     // Update user to be a creator
     let result = sqlx::query(
         "UPDATE users SET is_creator = true WHERE id = $1"
@@ -148,8 +167,11 @@ async fn become_creator(
     })?;
     
     if result.rows_affected() == 0 {
+        eprintln!("No rows affected when updating user {} to creator", user_id);
         return Err(StatusCode::NOT_FOUND);
     }
+    
+    println!("✅ User {} successfully became a creator", user_id);
     
     let response = serde_json::json!({
         "success": true,
