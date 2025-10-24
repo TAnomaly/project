@@ -19,6 +19,7 @@ pub struct ProductQuery {
     pub page: Option<u32>,
     pub limit: Option<u32>,
     pub user_id: Option<Uuid>,
+    pub creatorId: Option<String>,
 }
 
 pub fn product_routes() -> Router<Database> {
@@ -39,7 +40,16 @@ async fn get_products(
     let limit = params.limit.unwrap_or(20);
     let offset = (page - 1) * limit;
 
-    let products = if let Some(user_id) = params.user_id {
+    let products = if let Some(creator_id) = params.creatorId {
+        sqlx::query_as::<_, Product>(
+            "SELECT * FROM products WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+        )
+        .bind(&creator_id)
+        .bind(limit as i64)
+        .bind(offset as i64)
+        .fetch_all(&db.pool)
+        .await
+    } else if let Some(user_id) = params.user_id {
         sqlx::query_as::<_, Product>(
             "SELECT * FROM products WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         )
@@ -57,7 +67,10 @@ async fn get_products(
         .fetch_all(&db.pool)
         .await
     }
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Error fetching products: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     Ok(Json(products))
 }

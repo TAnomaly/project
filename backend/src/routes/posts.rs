@@ -82,7 +82,7 @@ async fn get_posts(
             page,
             limit,
             total,
-            pages: 1,
+            pages: ((total as f64) / (limit as f64)).ceil() as u32,
         },
     };
     Ok(Json(response))
@@ -105,9 +105,23 @@ async fn get_posts_by_creator(
     .bind(offset as i64)
     .fetch_all(&db.pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Error fetching posts: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    let total = posts.len();
+    let total_count = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM posts WHERE user_id = $1"
+    )
+    .bind(&user_id)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Error counting posts: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let total = total_count as usize;
     let response = PostsResponse {
         success: true,
         data: posts,
@@ -115,7 +129,7 @@ async fn get_posts_by_creator(
             page,
             limit,
             total,
-            pages: 1,
+            pages: ((total as f64) / (limit as f64)).ceil() as u32,
         },
     };
     Ok(Json(response))

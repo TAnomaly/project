@@ -28,33 +28,11 @@ interface Article {
   id: string;
   slug: string;
   title: string;
-  excerpt: string;
-  coverImage?: string;
-  publishedAt: string;
-  readTime: number;
-  viewCount: number;
-  author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  categories: Array<{
-    category: {
-      name: string;
-      slug: string;
-      color?: string;
-    };
-  }>;
-  tags: Array<{
-    tag: {
-      name: string;
-      slug: string;
-    };
-  }>;
-  _count: {
-    likes: number;
-    comments: number;
-  };
+  content?: string;
+  author_id: string;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function BlogPage() {
@@ -71,14 +49,14 @@ export default function BlogPage() {
       if (selectedCategory) params.append("category", selectedCategory);
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/posts?${params.toString()}`
+        `${process.env.NEXT_PUBLIC_API_URL}/articles?${params.toString()}`
       );
 
       if (response.data.success) {
-        setArticles(response.data.data.posts || response.data);
+        setArticles(response.data.data || []);
       } else {
         // Backend direkt array döndürüyor
-        setArticles(response.data);
+        setArticles(response.data || []);
       }
     } catch (error) {
       console.error("Error loading articles:", error);
@@ -94,7 +72,7 @@ export default function BlogPage() {
 
   const filteredArticles = articles.filter((article) =>
     article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
+    article.content?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatDate = (dateString: string) => {
@@ -196,98 +174,47 @@ export default function BlogPage() {
                 className="group cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden"
                 onClick={() => router.push(`/blog/${article.slug}`)}
               >
-                {/* Cover Image */}
-                {article.coverImage && (
-                  <div className="relative h-48 bg-gradient-to-br from-purple-400 to-blue-400 overflow-hidden">
-                    <Image
-                      src={getFullMediaUrl(article.coverImage) ?? article.coverImage}
-                      alt={article.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      priority={false}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                {/* Cover Image - Placeholder */}
+                <div className="relative h-48 bg-gradient-to-br from-purple-400 to-blue-400 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BookOpen className="w-16 h-16 text-white/50" />
                   </div>
-                )}
+                </div>
 
                 <CardContent className="p-6">
-                  {/* Categories */}
-                  {article.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {article.categories.map((cat, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 text-xs font-semibold rounded-full"
-                          style={{
-                            backgroundColor: cat.category.color || "#E0E7FF",
-                            color: "#4F46E5",
-                          }}
-                        >
-                          {cat.category.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {/* Categories - Simplified */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-600">
+                      Article
+                    </span>
+                  </div>
 
                   {/* Title */}
                   <h3 className="text-xl font-bold mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
                     {article.title}
                   </h3>
 
-                  {/* Excerpt */}
-                  {article.excerpt && (
+                  {/* Content Preview */}
+                  {article.content && (
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                      {article.excerpt}
+                      {article.content.substring(0, 150)}...
                     </p>
                   )}
 
                   {/* Meta */}
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{article.readTime} min read</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{article.viewCount}</span>
+                      <Calendar className="w-4 h-4" />
+                      <span>{formatDate(article.published_at || article.created_at)}</span>
                     </div>
                   </div>
 
-                  {/* Author & Stats */}
+                  {/* Read More */}
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <div className="flex items-center gap-2">
-                      {article.author.avatar ? (
-                        <Image
-                          src={getFullMediaUrl(article.author.avatar) ?? article.author.avatar}
-                          alt={article.author.name}
-                          width={32}
-                          height={32}
-                          className="rounded-full"
-                          sizes="32px"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-bold">
-                          {article.author.name.charAt(0)}
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-sm font-medium">{article.author.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(article.publishedAt)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Heart className="w-4 h-4" />
-                        <span>{article._count.likes}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageCircle className="w-4 h-4" />
-                        <span>{article._count.comments}</span>
-                      </div>
+                    <div className="flex items-center gap-1 text-purple-600">
+                      <BookOpen className="w-4 h-4" />
+                      <span>Read more</span>
                     </div>
                   </div>
                 </CardContent>

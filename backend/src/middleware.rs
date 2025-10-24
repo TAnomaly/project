@@ -21,6 +21,8 @@ pub async fn auth_middleware(
        path.starts_with("/api/events") ||
        path.starts_with("/api/posts") ||
        path.starts_with("/api/products") ||
+       path.starts_with("/api/articles") ||
+       path.starts_with("/api/podcasts") ||
        (path.starts_with("/api/") && request.method() == "OPTIONS") {
         return Ok(next.run(request).await);
     }

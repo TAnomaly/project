@@ -21,7 +21,7 @@ mod routes;
 
 use config::Config;
 use database::Database;
-use routes::{auth::auth_routes, users::user_routes, posts::post_routes, products::product_routes, campaigns::campaign_routes, events::event_routes, creators::creator_routes, articles::article_routes, podcasts::podcast_routes};
+use routes::{auth::auth_routes, users::user_routes, posts::post_routes, products::product_routes, campaigns::campaign_routes, events::event_routes, creators::creator_routes, articles::articles_routes, podcasts::podcast_routes};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/products", product_routes())
         .nest("/api/campaigns", campaign_routes())
         .nest("/api/events", event_routes())
-        .nest("/api/articles", article_routes())
+        .nest("/api/articles", articles_routes())
         .nest("/api/podcasts", podcast_routes())
         .layer(
             ServiceBuilder::new()

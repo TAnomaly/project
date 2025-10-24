@@ -30,6 +30,7 @@ export const getApiUrl = () => {
     return "https://perfect-happiness-production.up.railway.app/api";
   }
 
+  // Development fallback - always use localhost:4000/api
   return "http://localhost:4000/api";
 };
 
@@ -68,20 +69,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access - clean up all auth data
+      // Log the error but don't redirect for now
       if (process.env.NODE_ENV !== "production") {
-        console.warn("401 Unauthorized - clearing tokens and redirecting to login");
-      }
-      localStorage.removeItem("authToken");
-      // Also clear the cookie
-      if (typeof document !== 'undefined') {
-        document.cookie = "authToken=; path=/; max-age=0";
-      }
-      // Only redirect if not already on login/register page
-      if (typeof window !== 'undefined' &&
-        !window.location.pathname.startsWith('/login') &&
-        !window.location.pathname.startsWith('/register')) {
-        window.location.href = "/login";
+        console.warn("401 Unauthorized:", error.config?.url);
       }
     }
     return Promise.reject(error);

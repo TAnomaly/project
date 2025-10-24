@@ -29,8 +29,8 @@ impl Database {
                 avatar_url TEXT,
                 bio TEXT,
                 is_creator BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
             "#,
         )
@@ -47,8 +47,8 @@ impl Database {
                 media_url TEXT,
                 media_type VARCHAR(50),
                 is_premium BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
             "#,
         )
@@ -62,13 +62,13 @@ impl Database {
                 user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
-                price DECIMAL(10,2) NOT NULL,
+                price DOUBLE PRECISION NOT NULL,
                 currency VARCHAR(3) DEFAULT 'USD',
                 image_url TEXT,
                 is_digital BOOLEAN DEFAULT FALSE,
                 download_url TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
             "#,
         )
@@ -85,8 +85,8 @@ impl Database {
                 status VARCHAR(50) NOT NULL,
                 current_period_start TIMESTAMP,
                 current_period_end TIMESTAMP,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
             "#,
         )

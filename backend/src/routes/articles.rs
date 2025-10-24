@@ -59,23 +59,29 @@ async fn get_articles(
 
     let articles = if let Some(author_id) = params.author_id {
         sqlx::query_as::<_, Article>(
-            "SELECT * FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT * FROM articles WHERE author_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         )
         .bind(&author_id)
         .bind(limit as i64)
         .bind(offset as i64)
         .fetch_all(&db.pool)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|e| {
+            eprintln!("Error fetching articles: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
     } else {
         sqlx::query_as::<_, Article>(
-            "SELECT * FROM posts ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT * FROM articles ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(limit as i64)
         .bind(offset as i64)
         .fetch_all(&db.pool)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map_err(|e| {
+            eprintln!("Error fetching articles: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
     };
 
     let total = articles.len();
@@ -90,4 +96,28 @@ async fn get_articles(
         },
     };
     Ok(Json(response))
+}
+
+async fn get_article_by_slug(
+    State(db): State<Database>,
+    Path(slug): Path<String>,
+) -> Result<Json<Article>, StatusCode> {
+    let article = sqlx::query_as::<_, Article>(
+        "SELECT * FROM articles WHERE slug = $1"
+    )
+    .bind(&slug)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Error fetching article by slug: {:?}", e);
+        StatusCode::NOT_FOUND
+    })?;
+
+    Ok(Json(article))
+}
+
+pub fn articles_routes() -> Router<Database> {
+    Router::new()
+        .route("/", get(get_articles))
+        .route("/:slug", get(get_article_by_slug))
 }

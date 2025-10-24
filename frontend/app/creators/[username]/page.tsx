@@ -102,15 +102,15 @@ export default function CreatorProfilePage() {
           break;
         case "blog":
           response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/articles?authorId=${profile.user.id}`);
-          if (response.data.success) setArticles(response.data.data.articles || []);
+          if (response.data.success) setArticles(response.data.data || []);
           break;
         case "podcast":
           response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/podcasts?creatorId=${profile.user.id}`);
-          if (response.data.success) setPodcasts(response.data.data.podcasts || []);
+          if (response.data.success) setPodcasts(response.data.data || []);
           break;
         case "events":
           response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/events?hostId=${profile.user.id}`);
-          if (response.data.success) setEvents(response.data.data.events || []);
+          if (response.data.success) setEvents(response.data.data || []);
           break;
       }
     } catch (error) {

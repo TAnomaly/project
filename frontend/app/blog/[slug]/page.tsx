@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
@@ -18,10 +18,20 @@ import {
 } from "lucide-react";
 
 // Interfaces
-interface Article { id: string; slug: string; title: string; content: string; excerpt: string; coverImage?: string; publishedAt: string; readTime: number; viewCount: number; hasLiked?: boolean; author: { id: string; name: string; avatar?: string; }; _count: { likes: number; comments: number; }; }
+interface Article {
+    id: string;
+    slug: string;
+    title: string;
+    content?: string;
+    author_id: string;
+    published_at?: string;
+    created_at: string;
+    updated_at: string;
+}
 interface Comment { id: string; content: string; createdAt: string; user: { name: string; avatar?: string; }; }
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
+export default function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+    const resolvedParams = use(params);
     const router = useRouter();
     const [article, setArticle] = useState<Article | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -46,18 +56,24 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             const cacheBuster = `_=${new Date().getTime()}`;
 
             // 1) Fetch article by slug
-            const articleResponse = await axios.get(`${apiUrl}/articles/${params.slug}?${cacheBuster}`, { headers });
-            if (articleResponse.data.success) {
-                const articleData = articleResponse.data.data;
-                setArticle(articleData);
-                setLikeCount(articleData._count?.likes || 0);
-                setIsLiked(articleData.hasLiked || false);
+            const articleResponse = await axios.get(`${apiUrl}/articles/${resolvedParams.slug}?${cacheBuster}`, { headers });
+            // Backend returns article directly, not wrapped in success/data
+            const articleData = articleResponse.data;
+            setArticle(articleData);
+            setLikeCount(articleData._count?.likes || 0);
+            setIsLiked(articleData.hasLiked || false);
 
-                // 2) Fetch comments by article ID (backend expects :id, not slug)
-                const commentsResponse = await axios.get(`${apiUrl}/articles/${articleData.id}/comments?${cacheBuster}`, { headers });
+            // 2) Fetch comments by article ID (backend expects :id, not slug)
+            try {
+                const commentsResponse = await axios.get(`${apiUrl}/articles/${resolvedParams.slug}/comments?${cacheBuster}`, { headers });
                 if (commentsResponse.data.success) {
                     setComments(commentsResponse.data.data);
+                } else {
+                    setComments(commentsResponse.data || []);
                 }
+            } catch (commentError) {
+                // Comments endpoint might not exist yet, just set empty array
+                setComments([]);
             }
         } catch (error: any) {
             if (isInitialLoad) {
@@ -69,7 +85,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                 setIsLoading(false);
             }
         }
-    }, [params.slug, router]);
+    }, [resolvedParams.slug, router]);
 
     useEffect(() => {
         loadArticleAndComments(true);
@@ -127,13 +143,13 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                 </Button>
                 <span className="text-xs font-bold">{comments.length}</span>
                 <div className="w-full h-[1px] bg-border/50"></div>
-                <SocialShare url={window.location.href} title={article.title} description={article.excerpt} trigger={<Button variant="ghost" size="icon" className="text-muted-foreground"><Share2 className="w-5 h-5" /></Button>} />
+                <SocialShare url={window.location.href} title={article.title} description={article.content?.substring(0, 100) || ""} trigger={<Button variant="ghost" size="icon" className="text-muted-foreground"><Share2 className="w-5 h-5" /></Button>} />
             </aside>
 
             {/* Header */}
             <header className="relative h-[45vh] min-h-[300px] w-full overflow-hidden">
                 <motion.div style={{ y: heroImageY, scale: heroImageScale }} className="absolute inset-0">
-                    <Image src={getFullMediaUrl(article.coverImage)!} alt={article.title} fill className="object-cover" />
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-blue-500/20" />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 </motion.div>
                 <div className="absolute bottom-0 left-0 right-0 p-8">
@@ -141,11 +157,13 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                         <BlurFade delay={0.25} inView>
                             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-4">{article.title}</h1>
                             <div className="flex items-center gap-4">
-                                <Image src={getFullMediaUrl(article.author.avatar)!} alt={article.author.name} width={48} height={48} className="rounded-full bg-muted" />
+                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                    <span className="text-lg font-semibold">{article.author_id.charAt(0).toUpperCase()}</span>
+                                </div>
                                 <div>
-                                    <p className="font-semibold text-foreground">{article.author.name}</p>
+                                    <p className="font-semibold text-foreground">Author {article.author_id}</p>
                                     <p className="text-sm text-muted-foreground">
-                                        {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} &middot; {article.readTime} min read
+                                        {new Date(article.published_at || article.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </p>
                                 </div>
                             </div>
@@ -157,7 +175,9 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             {/* Main Content */}
             <main className="max-w-4xl mx-auto px-8 py-12">
                 <BlurFade delay={0.5} inView>
-                    <div className="prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: article.content }} />
+                    <div className="prose prose-lg dark:prose-invert max-w-none">
+                        <p className="whitespace-pre-wrap">{article.content}</p>
+                    </div>
                 </BlurFade>
 
                 {/* Comments Section */}
