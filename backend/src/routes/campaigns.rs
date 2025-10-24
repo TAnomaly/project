@@ -287,11 +287,23 @@ async fn debug_campaigns_schema(
                  column_name, data_type, is_nullable, column_default);
     }
     
+    // Get row count
+    let row_count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM campaigns")
+        .fetch_one(&db.pool)
+        .await
+        .map_err(|e| {
+            println!("❌ Error getting row count: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    
+    println!("📊 Total campaigns: {}", row_count);
+    
     let response = serde_json::json!({
         "success": true,
         "table_name": "campaigns",
         "columns": schema_info,
-        "total_columns": schema_info.len()
+        "total_columns": schema_info.len(),
+        "total_rows": row_count
     });
     
     Ok(Json(response))
