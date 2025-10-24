@@ -57,12 +57,18 @@ api.interceptors.request.use(
     console.log("🔑 API Request:", config.url);
     console.log("   Token exists:", !!token);
     console.log("   Token preview:", token ? token.substring(0, 20) + "..." : "null");
-
+    console.log("   localStorage keys:", Object.keys(localStorage));
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log("✅ Authorization header added");
     } else {
       console.log("❌ No token found in localStorage");
+      console.log("   Available localStorage items:");
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        console.log(`     ${key}: ${localStorage.getItem(key || "")?.substring(0, 50)}...`);
+      }
     }
     return config;
   },
