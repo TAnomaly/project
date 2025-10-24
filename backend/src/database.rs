@@ -17,6 +17,8 @@ impl Database {
     }
 
     pub async fn run_migrations(&self) -> anyhow::Result<()> {
+        println!("🔄 Running database migrations...");
+        
         // Create tables if they don't exist
         sqlx::query(
             r#"
@@ -150,6 +152,7 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
+        println!("✅ Database migrations completed successfully!");
         Ok(())
     }
 }
