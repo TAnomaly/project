@@ -81,6 +81,9 @@ async fn create_campaign(
     claims: crate::auth::Claims,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
+    println!("🔄 Creating campaign for user: {}", claims.sub);
+    println!("📝 Campaign payload: {}", serde_json::to_string(&payload).unwrap_or("Failed to serialize".to_string()));
+    
     // Extract values from payload
     let title = payload.get("title")
         .and_then(|v| v.as_str())

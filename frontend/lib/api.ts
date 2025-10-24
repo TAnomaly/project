@@ -57,7 +57,7 @@ api.interceptors.request.use(
     console.log("🔑 API Request:", config.url);
     console.log("   Token exists:", !!token);
     console.log("   Token preview:", token ? token.substring(0, 20) + "..." : "null");
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log("✅ Authorization header added");

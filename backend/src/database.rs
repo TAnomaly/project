@@ -95,27 +95,18 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        // Drop and recreate campaigns table to ensure all columns exist
-        sqlx::query("DROP TABLE IF EXISTS campaigns CASCADE")
-            .execute(&self.pool)
-            .await?;
-
+        // Create campaigns table with all necessary columns
         sqlx::query(
             r#"
-            CREATE TABLE campaigns (
+            CREATE TABLE IF NOT EXISTS campaigns (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
-                story TEXT,
                 goal_amount DOUBLE PRECISION NOT NULL,
                 current_amount DOUBLE PRECISION DEFAULT 0.0,
                 status VARCHAR(50) DEFAULT 'DRAFT',
                 slug VARCHAR(255) UNIQUE NOT NULL,
                 creator_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                cover_image TEXT,
-                video_url TEXT,
-                category VARCHAR(100) DEFAULT 'OTHER',
-                end_date TIMESTAMP WITH TIME ZONE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             )
@@ -123,6 +114,27 @@ impl Database {
         )
         .execute(&self.pool)
         .await?;
+
+        // Add missing columns if they don't exist
+        sqlx::query("ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS story TEXT")
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query("ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS cover_image TEXT")
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query("ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS video_url TEXT")
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query("ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'OTHER'")
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query("ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS end_date TIMESTAMP WITH TIME ZONE")
+            .execute(&self.pool)
+            .await?;
 
         sqlx::query(
             r#"
