@@ -36,6 +36,7 @@ pub fn campaign_routes() -> Router<Database> {
         .route("/", get(get_campaigns))
         .route("/", post(create_campaign))
         .route("/:slug", get(get_campaign_by_slug))
+        .route("/debug/schema", get(debug_campaigns_schema))
 }
 
 async fn get_campaigns(
@@ -247,4 +248,51 @@ async fn get_campaign_by_slug(
             Err(StatusCode::NOT_FOUND)
         }
     }
+}
+
+async fn debug_campaigns_schema(
+    State(db): State<Database>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    println!("🔍 Debug: Checking campaigns table schema...");
+    
+    // Get table structure
+    let columns = sqlx::query(
+        "SELECT column_name, data_type, is_nullable, column_default 
+         FROM information_schema.columns 
+         WHERE table_name = 'campaigns' 
+         ORDER BY ordinal_position"
+    )
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| {
+        println!("❌ Error fetching table schema: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    
+    let mut schema_info = Vec::new();
+    for row in columns {
+        let column_name: String = row.get("column_name");
+        let data_type: String = row.get("data_type");
+        let is_nullable: String = row.get("is_nullable");
+        let column_default: Option<String> = row.get("column_default");
+        
+        schema_info.push(serde_json::json!({
+            "column_name": column_name,
+            "data_type": data_type,
+            "is_nullable": is_nullable,
+            "column_default": column_default
+        }));
+        
+        println!("📋 Column: {} ({}) - Nullable: {} - Default: {:?}", 
+                 column_name, data_type, is_nullable, column_default);
+    }
+    
+    let response = serde_json::json!({
+        "success": true,
+        "table_name": "campaigns",
+        "columns": schema_info,
+        "total_columns": schema_info.len()
+    });
+    
+    Ok(Json(response))
 }

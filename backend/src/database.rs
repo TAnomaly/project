@@ -19,25 +19,6 @@ impl Database {
     pub async fn run_migrations(&self) -> anyhow::Result<()> {
         println!("🔄 Running database migrations...");
         
-        // Check existing campaigns table structure
-        println!("🔍 Checking existing campaigns table structure...");
-        match sqlx::query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'campaigns' ORDER BY ordinal_position")
-            .fetch_all(&self.pool)
-            .await
-        {
-            Ok(columns) => {
-                println!("📋 Existing campaigns table columns:");
-                for row in columns {
-                    let column_name: String = row.get("column_name");
-                    let data_type: String = row.get("data_type");
-                    println!("   - {}: {}", column_name, data_type);
-                }
-            },
-            Err(e) => {
-                println!("⚠️ Could not check existing table structure: {}", e);
-            }
-        }
-        
         // Create tables if they don't exist
         sqlx::query(
             r#"
