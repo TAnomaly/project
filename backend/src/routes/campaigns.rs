@@ -148,10 +148,14 @@ async fn get_campaign_by_slug(
     State(db): State<Database>,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    // Query campaign from database by slug
+    // Query campaign from database by slug with all fields
     let campaign = sqlx::query(
-        "SELECT id, title, description, goal_amount, current_amount, status, slug, created_at, updated_at 
-         FROM campaigns WHERE slug = $1"
+        "SELECT c.id, c.title, c.description, c.goal_amount, c.current_amount, c.status, c.slug, c.created_at, c.updated_at,
+                c.cover_image, c.video_url, c.story, c.category, c.end_date,
+                u.id as creator_id, u.username, u.display_name, u.avatar_url, u.bio
+         FROM campaigns c
+         LEFT JOIN users u ON c.creator_id = u.id
+         WHERE c.slug = $1"
     )
     .bind(&slug)
     .fetch_one(&db.pool)
@@ -167,6 +171,18 @@ async fn get_campaign_by_slug(
             let status: String = row.get("status");
             let slug: String = row.get("slug");
             let created_at: DateTime<Utc> = row.get("created_at");
+            let cover_image: Option<String> = row.get("cover_image");
+            let video_url: Option<String> = row.get("video_url");
+            let story: Option<String> = row.get("story");
+            let category: Option<String> = row.get("category");
+            let end_date: Option<DateTime<Utc>> = row.get("end_date");
+            
+            // Creator info
+            let creator_id: Option<Uuid> = row.get("creator_id");
+            let username: Option<String> = row.get("username");
+            let display_name: Option<String> = row.get("display_name");
+            let avatar_url: Option<String> = row.get("avatar_url");
+            let bio: Option<String> = row.get("bio");
             
             let response = serde_json::json!({
                 "success": true,
@@ -175,10 +191,28 @@ async fn get_campaign_by_slug(
                     "slug": slug,
                     "title": title,
                     "description": description,
-                    "goal_amount": goal_amount,
-                    "current_amount": current_amount.unwrap_or(0.0),
+                    "story": story.unwrap_or(description),
+                    "goal": goal_amount,
+                    "goalAmount": goal_amount,
+                    "currentAmount": current_amount.unwrap_or(0.0),
                     "status": status,
-                    "created_at": created_at
+                    "category": category.unwrap_or("OTHER"),
+                    "imageUrl": cover_image.unwrap_or("https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80"),
+                    "videoUrl": video_url,
+                    "endDate": end_date,
+                    "createdAt": created_at,
+                    "creator": creator_id.map(|_| {
+                        serde_json::json!({
+                            "id": creator_id,
+                            "username": username,
+                            "firstName": display_name,
+                            "lastName": "",
+                            "avatar": avatar_url,
+                            "bio": bio
+                        })
+                    }),
+                    "creatorId": creator_id,
+                    "backers": 0
                 }
             });
             Ok(Json(response))
