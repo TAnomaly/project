@@ -6,7 +6,6 @@ use axum::{
     Router,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use sqlx::Row;
@@ -196,8 +195,8 @@ async fn get_campaign_by_slug(
                     "goalAmount": goal_amount,
                     "currentAmount": current_amount.unwrap_or(0.0),
                     "status": status,
-                    "category": category.unwrap_or("OTHER"),
-                    "imageUrl": cover_image.unwrap_or("https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80"),
+                    "category": category.unwrap_or("OTHER".to_string()),
+                    "imageUrl": cover_image.unwrap_or("https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80".to_string()),
                     "videoUrl": video_url,
                     "endDate": end_date,
                     "createdAt": created_at,
