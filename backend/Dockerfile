@@ -1,6 +1,13 @@
 # Use the official Rust image with a specific version
 FROM rust:1.82-slim
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
