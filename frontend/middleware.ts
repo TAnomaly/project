@@ -36,7 +36,7 @@ function isTokenValid(token: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("authToken")?.value ||
-                request.headers.get("authorization")?.replace("Bearer ", "");
+    request.headers.get("authorization")?.replace("Bearer ", "");
 
   // Validate token if it exists
   const hasValidToken = token ? isTokenValid(token) : false;
@@ -59,10 +59,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If accessing auth pages (login/register) with a valid token, redirect to dashboard
-  if (isAuthPath && hasValidToken) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+  // Allow access to auth pages even if already authenticated
+  // Users can logout and login again if needed
 
   return NextResponse.next();
 }

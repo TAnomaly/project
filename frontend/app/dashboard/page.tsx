@@ -114,6 +114,17 @@ export default function DashboardPage() {
       console.error("Failed to load dashboard data:", error);
       let errorMessage = "Failed to load dashboard data";
 
+      // Handle 401 Unauthorized - clear auth and redirect to login
+      if (error.response?.status === 401) {
+        console.log('401 Unauthorized - clearing auth and redirecting to login');
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        toast.error("Session expired. Please login again.");
+        // Force redirect to login page
+        window.location.replace("/login");
+        return;
+      }
+
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         errorMessage = "Connection timeout. Please check your internet or try again.";
       } else if (error.response?.data?.message) {
@@ -139,8 +150,12 @@ export default function DashboardPage() {
     console.log('getCurrentUser:', getCurrentUser());
 
     if (!isAuthenticated()) {
-      console.log('Not authenticated, redirecting to login');
-      router.push("/login");
+      console.log('Not authenticated, showing login message');
+      // Clear any existing auth data
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      // Show message and stop loading
+      setIsLoading(false);
       return;
     }
 
@@ -205,6 +220,41 @@ export default function DashboardPage() {
             />
           </svg>
           <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login message if not authenticated
+  if (!isAuthenticated()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto">
+          <div className="mb-6">
+            <svg
+              className="h-16 w-16 text-muted-foreground mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold mb-4">Please Login</h1>
+          <p className="text-muted-foreground mb-6">
+            You need to be logged in to access your dashboard.
+          </p>
+          <Button
+            className="w-full"
+            onClick={() => window.location.href = "/login"}
+          >
+            Go to Login
+          </Button>
         </div>
       </div>
     );

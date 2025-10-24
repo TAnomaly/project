@@ -69,10 +69,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Log the error but don't redirect for now
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("401 Unauthorized:", error.config?.url);
-      }
+      console.warn("401 Unauthorized:", error.config?.url);
+      // Clear invalid token
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
     }
     return Promise.reject(error);
   }
@@ -223,9 +223,6 @@ export const commentApi = {
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ token: string; user: User }>> => {
     const { data } = await api.post("/auth/login", { email, password });
-    if (data.token) {
-      localStorage.setItem("authToken", data.token);
-    }
     return { success: true, data: { token: data.token, user: data.user } };
   },
 
@@ -240,14 +237,13 @@ export const authApi = {
       name: userData.username,
       username: userData.username,
     });
-    if (data.token) {
-      localStorage.setItem("authToken", data.token);
-    }
     return { success: true, data: { token: data.token, user: data.user } };
   },
 
   logout: async (): Promise<void> => {
-    localStorage.removeItem("authToken");
+    // Use the auth utility function for proper cleanup
+    const { removeToken } = await import("./auth");
+    removeToken();
   },
 
   resetPassword: async (email: string): Promise<ApiResponse<void>> => {

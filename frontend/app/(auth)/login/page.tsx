@@ -65,7 +65,7 @@ export default function LoginPage() {
       <div className="p-4 max-w-md w-full z-10">
         <BlurFade delay={0.25} inView>
           <div className="text-center mb-8">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -73,7 +73,7 @@ export default function LoginPage() {
             >
               Welcome Back
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -132,7 +132,7 @@ export default function LoginPage() {
                     <p className="text-red-500 text-xs pt-1">{errors.password.message}</p>
                   )}
                 </div>
-                
+
                 <Button
                   type="submit"
                   variant="gradient"
@@ -166,7 +166,7 @@ export default function LoginPage() {
                     GitHub
                   </Button>
                 </div>
-                
+
                 <p className="mt-6 text-center text-xs text-muted-foreground">
                   Don&apos;t have an account?{" "}
                   <Link href="/register" className="text-primary font-semibold hover:underline">
@@ -177,7 +177,7 @@ export default function LoginPage() {
             </div>
           </motion.div>
         </BlurFade>
-        
+
         <BlurFade delay={0.75} inView>
           <p className="text-center text-xs text-muted-foreground mt-8">
             By signing in, you agree to our{" "}
