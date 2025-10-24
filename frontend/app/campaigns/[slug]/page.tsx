@@ -98,15 +98,21 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ slug:
   const loadCampaign = useCallback(async () => {
     setIsLoading(true);
     try {
+      console.log("🔍 Loading campaign with slug:", resolvedParams.slug);
       const response = await campaignApi.getBySlug(resolvedParams.slug);
+      console.log("📡 Campaign API response:", response);
+      
       if (response.success && response.data) {
+        console.log("✅ Campaign loaded successfully:", response.data);
         setCampaign(response.data);
       } else {
+        console.error("❌ Campaign not found in API response");
         toast.error("Campaign not found");
         router.push("/campaigns");
       }
     } catch (error) {
-      console.error("Failed to load campaign:", error);
+      console.error("❌ Failed to load campaign:", error);
+      console.log("🔄 Using mock data as fallback");
       // Use mock data as fallback
       setCampaign(mockCampaign as any);
     } finally {

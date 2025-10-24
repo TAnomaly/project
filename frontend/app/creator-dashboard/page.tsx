@@ -78,17 +78,27 @@ export default function CreatorDashboard() {
   }, [loadDashboard]);
   const becomeCreator = async () => {
     try {
+      console.log("🔄 Attempting to become creator...");
+      console.log("   API URL:", process.env.NEXT_PUBLIC_API_URL);
+      console.log("   Token exists:", !!localStorage.getItem("authToken"));
+      
       const response = await userApi.becomeCreator();
+      console.log("📡 Become creator response:", response);
+      
       if (response.success) {
+        console.log("✅ Successfully became creator!");
         toast.success("Welcome to the creator program!");
         // Set creator status immediately
         setIsCreator(true);
         // Force page refresh to ensure state is updated
         window.location.reload();
       } else {
+        console.error("❌ Become creator failed:", response);
         toast.error(response.message || "Failed to become a creator");
       }
     } catch (error: any) {
+      console.error("❌ Become creator error:", error);
+      console.error("   Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to become a creator");
     }
   };
