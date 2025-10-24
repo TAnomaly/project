@@ -90,9 +90,27 @@ async fn create_campaign(
         .and_then(|v| v.as_str())
         .unwrap_or("Campaign description");
     
+    let story = payload.get("story")
+        .and_then(|v| v.as_str())
+        .unwrap_or(description);
+    
     let goal_amount = payload.get("goal_amount")
         .and_then(|v| v.as_f64())
         .unwrap_or(1000.0);
+    
+    let cover_image = payload.get("cover_image")
+        .and_then(|v| v.as_str())
+        .unwrap_or("https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80");
+    
+    let video_url = payload.get("video_url")
+        .and_then(|v| v.as_str());
+    
+    let category = payload.get("category")
+        .and_then(|v| v.as_str())
+        .unwrap_or("OTHER");
+    
+    let end_date = payload.get("end_date")
+        .and_then(|v| v.as_str());
     
     // Generate a unique slug from title
     let slug = title
@@ -104,19 +122,24 @@ async fn create_campaign(
         .filter(|c| c.is_alphanumeric() || *c == '-')
         .collect::<String>();
     
-    // Store campaign in database
+    // Store campaign in database with all fields
     let campaign_id = uuid::Uuid::new_v4();
     let result = sqlx::query(
-        "INSERT INTO campaigns (id, title, description, goal_amount, slug, status, creator_id, created_at, updated_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())"
+        "INSERT INTO campaigns (id, title, description, story, goal_amount, slug, status, creator_id, cover_image, video_url, category, end_date, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())"
     )
     .bind(campaign_id)
     .bind(title)
     .bind(description)
+    .bind(story)
     .bind(goal_amount)
     .bind(&slug)
     .bind("DRAFT")
     .bind(&claims.sub)
+    .bind(cover_image)
+    .bind(video_url)
+    .bind(category)
+    .bind(end_date)
     .execute(&db.pool)
     .await;
     
