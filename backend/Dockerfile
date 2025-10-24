@@ -1,5 +1,5 @@
 # Use the official Rust image with a specific version
-FROM rust:1.75-slim
+FROM rust:1.82-slim
 
 # Set working directory
 WORKDIR /app
