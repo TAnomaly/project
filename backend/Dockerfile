@@ -4,9 +4,6 @@ FROM rust:1.75-slim
 # Set working directory
 WORKDIR /app
 
-# Clean cargo cache
-RUN cargo clean
-
 # Copy Cargo.toml first for better caching
 COPY Cargo.toml ./
 
