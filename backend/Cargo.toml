@@ -47,8 +47,8 @@ redis = { version = "0.24", features = ["tokio-comp"] }
 
 # Stripe (will use reqwest directly for API calls)
 
-# CloudAMQP
-lapin = { version = "4.0.0-rc.1", features = ["tokio"] }
+# CloudAMQP (commented out - requires edition2024)
+# lapin = { version = "2.0.0", features = ["tokio"] }
 
 # Error handling
 anyhow = "1.0"
