@@ -92,12 +92,21 @@ export const digitalProductsApi = {
         if (params?.maxPrice !== undefined) query.maxPrice = params.maxPrice;
         if (params?.sort) query.sort = params.sort;
 
-        const { data } = await api.get("/products", { params: query });
-        return data as { success: boolean; data: DigitalProduct[] };
+        console.log("Making API call to /products with query:", query);
+        try {
+            const { data } = await api.get("/products", { params: query });
+            console.log("API response data:", data);
+            // Backend direkt array döndürüyor, frontend format'ına çeviriyoruz
+            return { success: true, data: data as DigitalProduct[] };
+        } catch (error) {
+            console.error("Error in digitalProductsApi.list:", error);
+            throw error;
+        }
     },
     getById: async (id: string) => {
         const { data } = await api.get(`/products/${id}`);
-        return data as { success: boolean; data: DigitalProduct };
+        // Backend returns product directly, not wrapped in success/data
+        return { success: true, data: data as DigitalProduct };
     },
     myProducts: async () => {
         const { data } = await api.get("/products/me");
@@ -128,30 +137,11 @@ export const digitalProductsApi = {
         return data as { success: boolean; data: { fileUrl: string; fileName: string; fileSize?: string; } };
     },
     meta: async () => {
-        // Mock data for now since backend doesn't have these endpoints
-        return {
-            success: true,
-            data: {
-                types: [{ type: "DIGITAL", count: 0 }],
-                priceRange: { min: 0, max: 100 },
-                stats: {
-                    totalProducts: 0,
-                    featuredCount: 0,
-                    creatorCount: 0,
-                    totalRevenue: 0
-                }
-            }
-        };
+        const { data } = await api.get("/products/meta");
+        return data as { success: boolean; data: ProductMeta };
     },
     collections: async () => {
-        // Mock data for now since backend doesn't have these endpoints
-        return {
-            success: true,
-            data: {
-                featured: [],
-                topSelling: [],
-                newArrivals: []
-            }
-        };
+        const { data } = await api.get("/products/collections");
+        return data as { success: boolean; data: ProductCollections };
     },
 };

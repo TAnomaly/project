@@ -59,7 +59,7 @@ export default function ProductCard({ product, onBuy, className, showCreator = t
                 >
                     <Image
                         src={imageSrc}
-                        alt={product.title}
+                        alt={product.name}
                         fill
                         className="object-cover group-hover/card:scale-105 transition-transform duration-500"
                         sizes="(max-width: 768px) 100vw, 33vw"
@@ -72,7 +72,7 @@ export default function ProductCard({ product, onBuy, className, showCreator = t
                         translateZ={30}
                         className="text-lg font-semibold text-foreground line-clamp-2"
                     >
-                        {product.title}
+                        {product.name}
                     </CardItem>
 
                     {product.description && (

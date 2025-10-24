@@ -20,7 +20,7 @@ export default function ProductDetailPage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
-    
+
     const [product, setProduct] = useState<DigitalProduct | null>(null);
     const [relatedProducts, setRelatedProducts] = useState<DigitalProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,9 +41,9 @@ export default function ProductDetailPage() {
             const { success, data } = await digitalProductsApi.getById(id);
             if (success && data) {
                 setProduct(data);
-                setActiveImage(data.coverImage);
+                setActiveImage(data.image_url || data.coverImage);
                 checkPurchaseStatus(data.id);
-                loadRelatedProducts(data.creator.id, data.id);
+                loadRelatedProducts(data.user_id, data.id);
             } else {
                 throw new Error("Product not found");
             }
@@ -101,7 +101,7 @@ export default function ProductDetailPage() {
                 toast.success("Your download will begin shortly.");
                 window.open(data.fileUrl, "_blank");
             } else {
-                 throw new Error(data.message || "Could not get download link.");
+                throw new Error(data.message || "Could not get download link.");
             }
         } catch (e: any) {
             toast.error(e.message || "Download failed");
@@ -125,14 +125,14 @@ export default function ProductDetailPage() {
                         <div className="space-y-4">
                             <div className="bg-muted/50 rounded-2xl overflow-hidden aspect-video relative">
                                 {activeImage && (
-                                    <Image src={getFullMediaUrl(activeImage)!} alt={product.title} fill className="object-contain"/>
+                                    <Image src={getFullMediaUrl(activeImage)!} alt={product.name} fill className="object-contain" />
                                 )}
                             </div>
                             {allImages.length > 1 && (
                                 <div className="grid grid-cols-5 gap-2">
                                     {allImages.map((img, i) => (
                                         <button key={i} onClick={() => setActiveImage(img)} className={`aspect-square rounded-lg overflow-hidden border-2 ${activeImage === img ? 'border-primary' : 'border-transparent'}`}>
-                                            <Image src={getFullMediaUrl(img)!} alt={`Thumbnail ${i+1}`} fill className="object-cover"/>
+                                            <Image src={getFullMediaUrl(img)!} alt={`Thumbnail ${i + 1}`} fill className="object-cover" />
                                         </button>
                                     ))}
                                 </div>
@@ -143,16 +143,18 @@ export default function ProductDetailPage() {
                     {/* Right Column: Product Details */}
                     <BlurFade delay={0.5} inView>
                         <div className="space-y-6">
-                            <Link href={`/creators/${product.creator.username}`} className="inline-flex items-center gap-3 group">
-                                <Image src={getFullMediaUrl(product.creator.avatar)!} alt={product.creator.name} width={40} height={40} className="rounded-full bg-muted"/>
+                            <Link href={`/creators/${product.user_id}`} className="inline-flex items-center gap-3 group">
+                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                                    <span className="text-lg font-semibold">{product.user_id.charAt(0).toUpperCase()}</span>
+                                </div>
                                 <div>
-                                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{product.creator.name}</p>
+                                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">Creator {product.user_id}</p>
                                     <p className="text-xs text-muted-foreground">View Profile</p>
                                 </div>
                             </Link>
 
                             <div className="space-y-2">
-                                <h1 className="text-4xl font-bold tracking-tight">{product.title}</h1>
+                                <h1 className="text-4xl font-bold tracking-tight">{product.name}</h1>
                                 <p className="text-3xl font-bold text-primary">${product.price.toFixed(2)}</p>
                             </div>
 
@@ -164,7 +166,7 @@ export default function ProductDetailPage() {
                                 <div className="space-y-2">
                                     {product.features.map((feature, i) => (
                                         <div key={i} className="flex items-center gap-2 text-sm">
-                                            <CheckCircle className="w-4 h-4 text-green-500"/>
+                                            <CheckCircle className="w-4 h-4 text-green-500" />
                                             <span>{feature}</span>
                                         </div>
                                     ))}
@@ -179,15 +181,15 @@ export default function ProductDetailPage() {
                                     </Button>
                                 ) : (
                                     <Button onClick={handleBuy} disabled={buying} size="lg" variant="gradient" className="w-full">
-                                        {buying ? "Processing..." : <><ShoppingCart className="w-5 h-5 mr-2"/>Buy Now</>}
+                                        {buying ? "Processing..." : <><ShoppingCart className="w-5 h-5 mr-2" />Buy Now</>}
                                     </Button>
                                 )}
                                 <p className="text-xs text-muted-foreground text-center mt-2">Secure payment via Stripe.</p>
                             </div>
 
                             <div className="p-4 rounded-lg bg-muted/50 border border-border/30 text-sm space-y-3">
-                                <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-primary"/><span>{product.fileTypes?.join(', ') || 'Digital files'}</span></div>
-                                <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary"/><span>Simple commercial license</span></div>
+                                <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /><span>{product.fileTypes?.join(', ') || 'Digital files'}</span></div>
+                                <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-primary" /><span>Simple commercial license</span></div>
                             </div>
                         </div>
                     </BlurFade>
@@ -198,7 +200,7 @@ export default function ProductDetailPage() {
             {relatedProducts.length > 0 && (
                 <div className="mt-24">
                     <BlurFade delay={0.75} inView>
-                        <h2 className="text-2xl font-bold mb-6">More from {product.creator.name}</h2>
+                        <h2 className="text-2xl font-bold mb-6">More from Creator {product.user_id}</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
                         </div>
@@ -213,22 +215,22 @@ const ProductPageSkeleton = () => (
     <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             <div className="space-y-4">
-                <Skeleton className="w-full aspect-video rounded-2xl"/>
+                <Skeleton className="w-full aspect-video rounded-2xl" />
                 <div className="grid grid-cols-5 gap-2">
-                    {[...Array(4)].map((_,i) => <Skeleton key={i} className="w-full aspect-square rounded-lg"/>)}
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="w-full aspect-square rounded-lg" />)}
                 </div>
             </div>
             <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                    <Skeleton className="w-10 h-10 rounded-full"/>
+                    <Skeleton className="w-10 h-10 rounded-full" />
                     <div className="space-y-1">
-                        <Skeleton className="h-4 w-24"/>
-                        <Skeleton className="h-3 w-16"/>
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
                     </div>
                 </div>
-                <Skeleton className="h-10 w-3/4"/>
-                <Skeleton className="h-24 w-full"/>
-                <Skeleton className="h-12 w-full"/>
+                <Skeleton className="h-10 w-3/4" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-12 w-full" />
             </div>
         </div>
     </div>
