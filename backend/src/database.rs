@@ -95,6 +95,25 @@ impl Database {
 
         sqlx::query(
             r#"
+            CREATE TABLE IF NOT EXISTS campaigns (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                goal_amount DOUBLE PRECISION NOT NULL,
+                current_amount DOUBLE PRECISION DEFAULT 0.0,
+                status VARCHAR(50) DEFAULT 'DRAFT',
+                slug VARCHAR(255) UNIQUE NOT NULL,
+                creator_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            )
+            "#,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        sqlx::query(
+            r#"
             CREATE TABLE IF NOT EXISTS purchases (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -124,6 +143,10 @@ impl Database {
             .await?;
 
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_subscriptions_creator_id ON subscriptions(creator_id)")
+            .execute(&self.pool)
+            .await?;
+
+        sqlx::query("CREATE INDEX IF NOT EXISTS idx_campaigns_creator_id ON campaigns(creator_id)")
             .execute(&self.pool)
             .await?;
 
