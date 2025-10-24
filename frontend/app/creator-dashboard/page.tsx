@@ -80,7 +80,15 @@ export default function CreatorDashboard() {
     try {
       console.log("🔄 Attempting to become creator...");
       console.log("   API URL:", process.env.NEXT_PUBLIC_API_URL);
-      console.log("   Token exists:", !!localStorage.getItem("authToken"));
+      
+      // Check token in localStorage
+      const token = localStorage.getItem("authToken");
+      console.log("   Token exists:", !!token);
+      console.log("   Token preview:", token ? token.substring(0, 20) + "..." : "null");
+      
+      // Check if user is logged in
+      const currentUser = getCurrentUser();
+      console.log("   Current user:", currentUser);
       
       const response = await userApi.becomeCreator();
       console.log("📡 Become creator response:", response);

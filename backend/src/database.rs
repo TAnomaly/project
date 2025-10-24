@@ -95,9 +95,14 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
+        // Drop and recreate campaigns table to ensure all columns exist
+        sqlx::query("DROP TABLE IF EXISTS campaigns CASCADE")
+            .execute(&self.pool)
+            .await?;
+
         sqlx::query(
             r#"
-            CREATE TABLE IF NOT EXISTS campaigns (
+            CREATE TABLE campaigns (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
