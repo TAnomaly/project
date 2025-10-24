@@ -4,8 +4,8 @@ FROM rust:1.75-slim
 # Set working directory
 WORKDIR /app
 
-# Copy Cargo.toml and Cargo.lock first for better caching
-COPY Cargo.toml Cargo.lock ./
+# Copy Cargo.toml first for better caching
+COPY Cargo.toml ./
 
 # Create a dummy main.rs to build dependencies
 RUN mkdir src && echo "fn main() {}" > src/main.rs
