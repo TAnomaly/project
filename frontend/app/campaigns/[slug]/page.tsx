@@ -58,28 +58,28 @@ const donationAmounts = [10, 25, 50, 100, 250, 500];
 // Helper function to convert YouTube URLs to embed format
 const getEmbedUrl = (url: string): string => {
   if (!url) return "";
-  
+
   // If it's already an embed URL, return as is
   if (url.includes("embed")) return url;
-  
+
   // YouTube watch URL
   if (url.includes("youtube.com/watch")) {
     const videoId = url.split("v=")[1]?.split("&")[0];
     return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
   }
-  
+
   // YouTube short URL
   if (url.includes("youtu.be/")) {
     const videoId = url.split("youtu.be/")[1]?.split("?")[0];
     return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
   }
-  
+
   // Vimeo URL
   if (url.includes("vimeo.com/")) {
     const videoId = url.split("vimeo.com/")[1]?.split("?")[0];
     return videoId ? `https://player.vimeo.com/video/${videoId}` : url;
   }
-  
+
   return url;
 };
 
@@ -251,7 +251,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ slug:
                   />
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">
-                      {campaignData.creator?.firstName && campaignData.creator?.lastName 
+                      {campaignData.creator?.firstName && campaignData.creator?.lastName
                         ? `${campaignData.creator.firstName} ${campaignData.creator.lastName}`
                         : campaignData.creator?.username || "Creator"
                       }
@@ -322,7 +322,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ slug:
                     </div>
                   )}
                   <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                    {campaignData.description}
+                    {campaignData.story || campaignData.description}
                   </div>
                 </div>
               )}
