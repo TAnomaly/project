@@ -4,17 +4,11 @@ FROM rust:1.75-slim
 # Set working directory
 WORKDIR /app
 
+# Clean cargo cache
+RUN cargo clean
+
 # Copy Cargo.toml first for better caching
 COPY Cargo.toml ./
-
-# Create a dummy main.rs to build dependencies
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-
-# Build dependencies (this layer will be cached if Cargo.toml doesn't change)
-RUN cargo build --release
-
-# Remove the dummy main.rs
-RUN rm src/main.rs
 
 # Copy the actual source code
 COPY src ./src
