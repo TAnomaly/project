@@ -94,11 +94,12 @@ async fn get_user_campaigns(
     State(db): State<Database>,
     claims: Claims,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    // For now, return all campaigns since we don't have user_id in campaigns table
+    // Get campaigns created by the current user
     let campaigns = sqlx::query(
         "SELECT id, title, description, goal_amount, current_amount, status, slug, created_at, updated_at 
-         FROM campaigns ORDER BY created_at DESC"
+         FROM campaigns WHERE creator_id = $1 ORDER BY created_at DESC"
     )
+    .bind(&claims.sub)
     .fetch_all(&db.pool)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

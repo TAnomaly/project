@@ -79,6 +79,7 @@ async fn get_campaigns(
 
 async fn create_campaign(
     State(db): State<Database>,
+    claims: crate::auth::Claims,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
     // Extract values from payload
@@ -107,8 +108,8 @@ async fn create_campaign(
     // Store campaign in database
     let campaign_id = uuid::Uuid::new_v4();
     let result = sqlx::query(
-        "INSERT INTO campaigns (id, title, description, goal_amount, slug, status, created_at, updated_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())"
+        "INSERT INTO campaigns (id, title, description, goal_amount, slug, status, creator_id, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())"
     )
     .bind(campaign_id)
     .bind(title)
@@ -116,6 +117,7 @@ async fn create_campaign(
     .bind(goal_amount)
     .bind(&slug)
     .bind("DRAFT")
+    .bind(&claims.sub)
     .execute(&db.pool)
     .await;
     

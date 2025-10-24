@@ -16,7 +16,7 @@ export default function CreatorDashboard() {
   const [subscribers, setSubscribers] = useState<Subscription[]>([]);
   const [posts, setPosts] = useState<CreatorPost[]>([]);
   const [stats, setStats] = useState({ totalSubscribers: 0, monthlyRevenue: 0 });
-  const [isCreator, setIsCreator] = useState(false);
+  const [isCreator, setIsCreator] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("");
 
   const loadDashboard = useCallback(async () => {
