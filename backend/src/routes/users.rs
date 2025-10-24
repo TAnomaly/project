@@ -137,6 +137,25 @@ async fn become_creator(
     
     println!("🔄 User {} is trying to become a creator", user_id);
     
+    // Check if user exists first
+    let user_exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)"
+    )
+    .bind(user_id)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| {
+        println!("❌ Error checking if user exists: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+    
+    if !user_exists {
+        println!("❌ User {} not found in database", user_id);
+        return Err(StatusCode::NOT_FOUND);
+    }
+    
+    println!("✅ User {} exists, updating to creator", user_id);
+    
     // Update user to be a creator
     let result = sqlx::query(
         "UPDATE users SET is_creator = true WHERE id = $1"
@@ -145,12 +164,12 @@ async fn become_creator(
     .execute(&db.pool)
     .await
     .map_err(|e| {
-        eprintln!("Error updating user to creator: {:?}", e);
+        println!("❌ Error updating user to creator: {:?}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
     
     if result.rows_affected() == 0 {
-        eprintln!("No rows affected when updating user {} to creator", user_id);
+        println!("❌ No rows affected when updating user {} to creator", user_id);
         return Err(StatusCode::NOT_FOUND);
     }
     

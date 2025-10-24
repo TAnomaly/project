@@ -12,8 +12,12 @@ pub async fn auth_middleware(
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    // Skip auth for certain paths
     let path = request.uri().path();
+    let method = request.method().to_string();
+    
+    println!("🔐 Auth middleware: {} {}", method, path);
+    
+    // Skip auth for certain paths
     if path.starts_with("/health") || 
        path.starts_with("/api/auth") ||
        path.starts_with("/api/creators") ||
@@ -26,28 +30,46 @@ pub async fn auth_middleware(
        path.starts_with("/api/notifications") ||
        path.starts_with("/api/subscriptions") ||
        (path.starts_with("/api/") && request.method() == "OPTIONS") {
+        println!("✅ Skipping auth for: {}", path);
         return Ok(next.run(request).await);
     }
+
+    println!("🔑 Authentication required for: {}", path);
 
     // Extract token from Authorization header
     let auth_header = request
         .headers()
         .get(AUTHORIZATION)
         .and_then(|header| header.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
+        .ok_or_else(|| {
+            println!("❌ No Authorization header found");
+            StatusCode::UNAUTHORIZED
+        })?;
+
+    println!("📝 Authorization header: {}", auth_header);
 
     if !auth_header.starts_with("Bearer ") {
+        println!("❌ Invalid Bearer token format");
         return Err(StatusCode::UNAUTHORIZED);
     }
 
     let token = &auth_header[7..]; // Remove "Bearer " prefix
+    println!("🎫 Token: {}", token);
 
     // Load config to get JWT secret
-    let config = Config::from_env().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let config = Config::from_env().map_err(|_| {
+        println!("❌ Failed to load config");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     
     // Verify JWT token
     let claims = verify_jwt(token, &config.jwt_secret)
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+        .map_err(|e| {
+            println!("❌ JWT verification failed: {}", e);
+            StatusCode::UNAUTHORIZED
+        })?;
+
+    println!("✅ JWT verified for user: {}", claims.sub);
 
     // Add user ID to request extensions
     request.extensions_mut().insert(claims);
