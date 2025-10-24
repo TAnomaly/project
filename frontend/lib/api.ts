@@ -178,7 +178,7 @@ export const userApi = {
   },
 
   getCampaigns: async (userId: string): Promise<ApiResponse<Campaign[]>> => {
-    const { data } = await api.get(`/users/${userId}/campaigns`);
+    const { data } = await api.get(`/users/me/campaigns`);
     return data;
   },
 

@@ -1,6 +1,7 @@
 use axum::{
     extract::DefaultBodyLimit,
-    http::Method,
+    http::{HeaderName, Method, StatusCode},
+    response::Json,
     routing::get,
     Router,
 };
@@ -55,6 +56,8 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/events", event_routes())
         .nest("/api/articles", articles_routes())
         .nest("/api/podcasts", podcast_routes())
+        .route("/api/notifications", get(get_notifications))
+        .route("/api/subscriptions/my-subscribers", get(get_my_subscribers))
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
@@ -62,7 +65,13 @@ async fn main() -> anyhow::Result<()> {
                     CorsLayer::new()
                         .allow_origin(Any)
                         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
-                        .allow_headers(Any),
+                        .allow_headers([
+                            HeaderName::from_static("content-type"),
+                            HeaderName::from_static("authorization"),
+                            HeaderName::from_static("accept"),
+                            HeaderName::from_static("origin"),
+                            HeaderName::from_static("x-requested-with"),
+                        ]),
                 )
                 .layer(axum::middleware::from_fn(middleware::auth_middleware))
                 .layer(DefaultBodyLimit::max(10 * 1024 * 1024)), // 10MB limit
@@ -81,4 +90,26 @@ async fn main() -> anyhow::Result<()> {
 
 async fn health_check() -> &'static str {
     "OK"
+}
+
+async fn get_notifications() -> Result<Json<serde_json::Value>, StatusCode> {
+    // Mock notifications for now
+    let response = serde_json::json!({
+        "success": true,
+        "data": []
+    });
+    
+    Ok(Json(response))
+}
+
+async fn get_my_subscribers() -> Result<Json<serde_json::Value>, StatusCode> {
+    // Mock subscribers for now
+    let response = serde_json::json!({
+        "success": true,
+        "data": {
+            "subscriptions": []
+        }
+    });
+    
+    Ok(Json(response))
 }

@@ -81,7 +81,7 @@ pub struct CreateUserRequest {
 #[derive(Debug, Deserialize)]
 pub struct CreatePostRequest {
     pub title: String,
-    pub content: Option<String>,
+    pub content: String,
     pub media_url: Option<String>,
     pub media_type: Option<String>,
     pub is_premium: Option<bool>,

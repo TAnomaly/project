@@ -26,6 +26,7 @@ pub struct Podcast {
 pub struct PodcastQuery {
     pub page: Option<u32>,
     pub limit: Option<u32>,
+    #[serde(rename = "creatorId")]
     pub creator_id: Option<String>,
 }
 
@@ -58,18 +59,41 @@ async fn get_podcasts(
     let offset = (page - 1) * limit;
 
     // Mock data for now since we don't have a podcasts table
-    let podcasts = vec![
-        Podcast {
-            id: Uuid::new_v4(),
-            title: "Sample Podcast".to_string(),
-            description: Some("A sample podcast episode".to_string()),
-            creator_id: params.creator_id.unwrap_or_default(),
-            episode_count: Some(5),
-            total_duration: Some("2h 30m".to_string()),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        }
-    ];
+    let creator_id = params.creator_id.unwrap_or_default();
+    let podcasts = if creator_id.is_empty() {
+        vec![]
+    } else {
+        // Her creator için farklı podcast'ler döndür
+        let podcast_titles = match creator_id.as_str() {
+            "user1" => vec![
+                "Rust Programming Deep Dive",
+                "Web Development Tips",
+                "System Design Patterns"
+            ],
+            "user2" => vec![
+                "JavaScript Mastery",
+                "React Best Practices",
+                "Node.js Performance"
+            ],
+            _ => vec![
+                "General Tech Talk",
+                "Industry Insights"
+            ]
+        };
+        
+        podcast_titles.into_iter().map(|title| {
+            Podcast {
+                id: Uuid::new_v4(),
+                title: title.to_string(),
+                description: Some(format!("A podcast episode about {}", title)),
+                creator_id: creator_id.clone(),
+                episode_count: Some(5),
+                total_duration: Some("2h 30m".to_string()),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            }
+        }).collect()
+    };
 
     let total = podcasts.len();
     let response = PodcastsResponse {

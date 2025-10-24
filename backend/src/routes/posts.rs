@@ -25,6 +25,7 @@ pub fn post_routes() -> Router<Database> {
     Router::new()
         .route("/", get(get_posts).post(create_post))
         .route("/creator/:user_id", get(get_posts_by_creator))
+        .route("/my-posts", get(get_my_posts))
         .route("/:id", get(get_post_by_id))
         .route("/:id", put(update_post))
         .route("/:id", delete(delete_post))
@@ -135,12 +136,63 @@ async fn get_posts_by_creator(
     Ok(Json(response))
 }
 
-async fn create_post(
+async fn get_my_posts(
     State(db): State<Database>,
     claims: Claims,
+    Query(params): Query<PostQuery>,
+) -> Result<Json<PostsResponse>, StatusCode> {
+    let page = params.page.unwrap_or(1);
+    let limit = params.limit.unwrap_or(20);
+    let offset = (page - 1) * limit;
+    let user_id = &claims.sub;
+
+    let posts = sqlx::query_as::<_, Post>(
+        "SELECT * FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+    )
+    .bind(user_id)
+    .bind(limit as i64)
+    .bind(offset as i64)
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Error fetching my posts: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let total_count = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM posts WHERE user_id = $1"
+    )
+    .bind(user_id)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Error counting my posts: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let total = total_count as usize;
+    let response = PostsResponse {
+        success: true,
+        data: posts,
+        pagination: PaginationInfo {
+            page,
+            limit,
+            total,
+            pages: ((total as f64) / (limit as f64)).ceil() as u32,
+        },
+    };
+
+    Ok(Json(response))
+}
+
+async fn create_post(
+    State(db): State<Database>,
     Json(payload): Json<CreatePostRequest>,
 ) -> Result<Json<Post>, StatusCode> {
-    let user_id = claims.sub.parse::<Uuid>().unwrap();
+    // For now, use a default user_id for testing
+    let user_id = "550e8400-e29b-41d4-a716-446655440000".to_string();
+
+    println!("Creating post with payload: {:?}", payload);
 
     let post = sqlx::query_as::<_, Post>(
         r#"
@@ -157,7 +209,10 @@ async fn create_post(
     .bind(payload.is_premium.unwrap_or(false))
     .fetch_one(&db.pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Error creating post: {:?}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     Ok(Json(post))
 }

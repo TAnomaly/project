@@ -26,6 +26,7 @@ pub struct Article {
 pub struct ArticleQuery {
     pub page: Option<u32>,
     pub limit: Option<u32>,
+    #[serde(rename = "authorId")]
     pub author_id: Option<String>,
 }
 
@@ -56,12 +57,15 @@ async fn get_articles(
     let page = params.page.unwrap_or(1);
     let limit = params.limit.unwrap_or(20);
     let offset = (page - 1) * limit;
+    
+    eprintln!("Articles API called with params: {:?}", params);
 
-    let articles = if let Some(author_id) = params.author_id {
+    let articles = if let Some(author_id) = &params.author_id {
+        eprintln!("Filtering articles by author_id: {}", author_id);
         sqlx::query_as::<_, Article>(
             "SELECT * FROM articles WHERE author_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         )
-        .bind(&author_id)
+        .bind(author_id)
         .bind(limit as i64)
         .bind(offset as i64)
         .fetch_all(&db.pool)

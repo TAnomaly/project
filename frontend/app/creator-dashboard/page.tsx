@@ -31,10 +31,11 @@ export default function CreatorDashboard() {
       // Check if user is a creator
       const userResponse = await userApi.getMe();
       if (userResponse.success && userResponse.data) {
-        setIsCreator(userResponse.data.isCreator || false);
+        const isCreator = userResponse.data.isCreator || userResponse.data.is_creator || false;
+        setIsCreator(isCreator);
         setUserName(userResponse.data.username || "");
 
-        if (!userResponse.data.isCreator) {
+        if (!isCreator) {
           // Not a creator yet
           setIsLoading(false);
           return;
@@ -80,8 +81,10 @@ export default function CreatorDashboard() {
       const response = await userApi.becomeCreator();
       if (response.success) {
         toast.success("Welcome to the creator program!");
+        // Set creator status immediately
         setIsCreator(true);
-        loadDashboard();
+        // Force page refresh to ensure state is updated
+        window.location.reload();
       } else {
         toast.error(response.message || "Failed to become a creator");
       }
@@ -121,35 +124,46 @@ export default function CreatorDashboard() {
             </div>
           </div>
 
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-[#F92672] via-[#AE81FF] to-[#66D9EF] bg-clip-text text-transparent">Become a Creator</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-2xl mx-auto">
-            Start earning from your supporters with recurring memberships, exclusive content, and direct community support.
-          </p>
+          {!isCreator ? (
+            <>
+              <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-[#F92672] via-[#AE81FF] to-[#66D9EF] bg-clip-text text-transparent">Become a Creator</h1>
+              <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-2xl mx-auto">
+                Start earning from your supporters with recurring memberships, exclusive content, and direct community support.
+              </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div className="group p-6 bg-white dark:bg-gray-800 rounded-2xl border-2 border-transparent hover:border-[#A6E22E] transition-all hover:shadow-lg hover:scale-105">
-              <div className="text-5xl mb-4">💰</div>
-              <h3 className="font-semibold mb-2 text-lg">Recurring Income</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Monthly or yearly subscriptions from your supporters</p>
-            </div>
-            <div className="group p-6 bg-white dark:bg-gray-800 rounded-2xl border-2 border-transparent hover:border-[#E6DB74] transition-all hover:shadow-lg hover:scale-105">
-              <div className="text-5xl mb-4">🔒</div>
-              <h3 className="font-semibold mb-2 text-lg">Exclusive Content</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Share posts and updates only for your members</p>
-            </div>
-            <div className="group p-6 bg-white dark:bg-gray-800 rounded-2xl border-2 border-transparent hover:border-[#66D9EF] transition-all hover:shadow-lg hover:scale-105">
-              <div className="text-5xl mb-4">📊</div>
-              <h3 className="font-semibold mb-2 text-lg">Analytics</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Track your growth and earnings in real-time</p>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="group p-6 bg-white dark:bg-gray-800 rounded-2xl border-2 border-transparent hover:border-[#A6E22E] transition-all hover:shadow-lg hover:scale-105">
+                  <div className="text-5xl mb-4">💰</div>
+                  <h3 className="font-semibold mb-2 text-lg">Recurring Income</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Monthly or yearly subscriptions from your supporters</p>
+                </div>
+                <div className="group p-6 bg-white dark:bg-gray-800 rounded-2xl border-2 border-transparent hover:border-[#E6DB74] transition-all hover:shadow-lg hover:scale-105">
+                  <div className="text-5xl mb-4">🔒</div>
+                  <h3 className="font-semibold mb-2 text-lg">Exclusive Content</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Share posts and updates only for your members</p>
+                </div>
+                <div className="group p-6 bg-white dark:bg-gray-800 rounded-2xl border-2 border-transparent hover:border-[#66D9EF] transition-all hover:shadow-lg hover:scale-105">
+                  <div className="text-5xl mb-4">📊</div>
+                  <h3 className="font-semibold mb-2 text-lg">Analytics</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Track your growth and earnings in real-time</p>
+                </div>
+              </div>
 
-          <button
-            onClick={becomeCreator}
-            className="btn-monokai-pink px-8 py-4 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
-          >
-            Start Creating
-          </button>
+              <button
+                onClick={becomeCreator}
+                className="btn-monokai-pink px-8 py-4 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                Start Creating
+              </button>
+            </>
+          ) : (
+            <>
+              <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-[#F92672] via-[#AE81FF] to-[#66D9EF] bg-clip-text text-transparent">Creator Dashboard</h1>
+              <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-2xl mx-auto">
+                Welcome to your creator dashboard! Manage your content, subscribers, and earnings.
+              </p>
+            </>
+          )}
         </div>
       </div>
     );

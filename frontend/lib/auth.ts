@@ -5,7 +5,7 @@ const TOKEN_KEY = "authToken";
 export const AUTH_EVENT = "fundify-auth-change";
 
 interface DecodedToken {
-  userId: string;
+  sub: string;
   email: string;
   username: string;
   exp: number;
@@ -99,7 +99,7 @@ export const getCurrentUser = (): Partial<User> | null => {
         const userData = JSON.parse(storedUser);
         // Merge token data with stored user data (stored data takes priority)
         return {
-          id: decoded.userId,
+          id: decoded.sub,
           email: decoded.email,
           username: userData.username || decoded.username,
           name: userData.name,
