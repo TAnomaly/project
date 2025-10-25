@@ -17,6 +17,7 @@ import {
   FeedContentType,
   FeedBookmark,
 } from "./types";
+import { setToken, setUser } from "./auth";
 
 // Create axios instance with default config
 export const getApiUrl = () => {
@@ -58,7 +59,7 @@ api.interceptors.request.use(
     console.log("   Token exists:", !!token);
     console.log("   Token preview:", token ? token.substring(0, 20) + "..." : "null");
     console.log("   localStorage keys:", Object.keys(localStorage));
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log("✅ Authorization header added");
@@ -236,6 +237,8 @@ export const commentApi = {
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ token: string; user: User }>> => {
     const { data } = await api.post("/auth/login", { email, password });
+    setToken(data.token);
+    setUser(data.user);
     return { success: true, data: { token: data.token, user: data.user } };
   },
 
